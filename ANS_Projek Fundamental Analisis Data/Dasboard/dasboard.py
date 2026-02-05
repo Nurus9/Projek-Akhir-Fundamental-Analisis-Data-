@@ -4,7 +4,8 @@ import seaborn as sns
 import streamlit as st
 from datetime import datetime
 import numpy as np
-import gdown
+from pathlib import Path
+
 
 # Set style untuk visualisasi
 sns.set_style("whitegrid")
@@ -19,21 +20,20 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-# LOAD DATA
-url = "https://drive.google.com/uc?id=1AbCDefGhIJklMNopQRsTuvWxYZ"
-output = "cleaned_data.csv"
 
-gdown.download(url, output, quiet=False)
+# Mencari lokasi folder 'dashboard' itu sendiri
+BASE_DIR = Path(__file__).resolve().parent
 
-df = pd.read_csv(output)
+# Load data yang ada di dalam folder dashboard
+df_main = pd.read_csv(BASE_DIR / "all_data_ans.csv")
 
 @st.cache_data
 def load_data():
     # Load main dataset
-    df = pd.read_csv(r'C:\Users\ASUS\OneDrive\New folder\OneDrive\Pictures\Documents\2. Kursus Dicoding\ANS_Projek Fundamental Analisis Data\Dasboard\all_data_ans.csv')  # ← GANTI PATH INI
+    df = df_main.copy()
     
     # Load translation
-    df_translation = pd.read_csv(r'C:\Users\ASUS\OneDrive\New folder\OneDrive\Pictures\Documents\2. Kursus Dicoding\ANS_Projek Fundamental Analisis Data\Data\product_category_name_translation.csv')  # ← GANTI PATH INI
+    df_translation = pd.read_csv(BASE_DIR.parent / "Data" / "product_category_name_translation.csv")  # ← GANTI PATH INI
     
     # Merge untuk translate kategori
     df = df.merge(
@@ -859,13 +859,13 @@ with tab7:
 
 with st.expander("💡 Insight & Kesimpulan"):
     top_seg_name = segment_stats.index[0]
-    top_seg_revenue = segment_stats.loc[top_seg_name, 'Total Pendapatan']
-    top_seg_pct = segment_stats.loc[top_seg_name, 'Pendapatan %']
+    top_seg_revenue = segment_stats.loc[top_seg_name, 'Total Revenue']
+    top_seg_pct = segment_stats.loc[top_seg_name, 'Revenue %']
     top_seg_customers = int(segment_stats.loc[top_seg_name, 'Customer Count'])
     top_seg_avg_monetary = segment_stats.loc[top_seg_name, 'Avg Monetary']
     
     champions_count = int(segment_stats.loc['Champions', 'Customer Count']) if 'Champions' in segment_stats.index else 0
-    champions_revenue = segment_stats.loc['Champions', 'Total Pendapatan'] if 'Champions' in segment_stats.index else 0
+    champions_revenue = segment_stats.loc['Champions', 'Total Revenue'] if 'Champions' in segment_stats.index else 0
     
     st.write(f"""
     **Temuan Utama:**
