@@ -24,14 +24,10 @@ st.set_page_config(
 # Mencari lokasi folder 'dashboard' itu sendiri
 BASE_DIR = Path(__file__).resolve().parent
 
-# Load data yang ada di dalam folder dashboard
-df_main = pd.read_csv(BASE_DIR / "all_data_ans.csv")
-
 @st.cache_data
 def load_data():
-    # Load main dataset
-    df = df_main.copy()
-    
+    # 1. Load data utama (Hanya di dalam sini)
+    df = pd.read_csv(BASE_DIR / "all_data_ans.csv")
     # Load translation
     df_translation = pd.read_csv(BASE_DIR.parent / "Data" / "product_category_name_translation.csv")  # ← GANTI PATH INI
     
@@ -424,7 +420,7 @@ with tab3:
             value = row.frequency
             pct = (value / total_transactions) * 100
             ax.text(i, value, f'{value:,}\n({pct:.1f}%)', 
-                   ha='center', va='bottom', fontsize=10, fontweight='bold')
+                    ha='center', va='bottom', fontsize=10, fontweight='bold')
         
         plt.tight_layout()
         st.pyplot(fig)
@@ -892,6 +888,5 @@ st.markdown("---")
 st.markdown("""
     <div style='text-align: center; color: #666;'>
         <p>📊 Dashboard Analisis E-Commerce | Periode 2016-2018</p>
-        <p>Dibuat dengan ❤️ menggunakan Streamlit | © 2024</p>
     </div>
 """, unsafe_allow_html=True)
