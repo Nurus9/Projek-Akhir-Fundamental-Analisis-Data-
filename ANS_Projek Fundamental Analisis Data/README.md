@@ -4,9 +4,13 @@ Proyek ini merupakan analisis mendalam terhadap dataset publik E-Commerce di Bra
 
 ## 📋 Pertanyaan Bisnis
 
-1. Kategori produk mana yang memberikan kontribusi pendapatan terbesar selama periode 2016–2018?
-2. Apa metode pembayaran yang paling populer dan memiliki nilai transaksi tertinggi?
-3. Bagaimana segmentasi pelanggan berdasarkan analisis RFM dan segmen mana yang paling bernilai bagi bisnis?
+1. Kategori produk apa yang memberikan kontribusi pendapatan terbesar
+   pada E-Commerce selama periode 2016–2018?
+2. Metode pembayaran apa yang paling sering digunakan pelanggan dan
+   memiliki nilai transaksi tertinggi selama periode 2016–2018?
+3. Bagaimana segmentasi pelanggan E-Commerce berdasarkan Recency, Frequency,
+   dan Monetary (RFM) selama periode 2016–2018, serta segmen pelanggan
+   mana yang memberikan kontribusi pendapatan terbesar?
 
 ## 🛠️ Teknologi & Library
 
@@ -23,11 +27,11 @@ Proyek ini dikembangkan menggunakan **Python 3.9+** dengan beberapa library utam
 ├── dashboard/
 │   ├── main_data.csv       # Dataset yang telah dibersihkan untuk dashboard
 │   └── dashboard.py        # File utama aplikasi Streamlit
-├── data/                   # Dataset mentah (CSV)
+├── data/                   # Dataset mentah (CSV) dan terpisah
 ├── notebook.ipynb          # File Jupyter Notebook (Proses Analisis Lengkap)
 ├── README.md               # Dokumentasi proyek
 ├── requirements.txt        # Daftar library yang dibutuhkan
-└── url.txt                 # Tautan dashboard (jika sudah dideploy)
+└── url.txt                 # Tautan dashboard
 
 ```
 
@@ -54,14 +58,7 @@ pip install -r requirements.txt
 ### 3. Menjalankan Dashboard
 
 ```bash
-streamlit run dashboard/dashboard.py
+streamlit run "path"
 
 ```
-
-## 💡 Ringkasan Analisis (Insights)
-
-* **Kategori Produk:** Kategori **Health & Beauty** memimpin pendapatan tertinggi, menunjukkan pergeseran tren belanja ke arah produk perawatan diri.
-* **Metode Pembayaran:** **Credit Card** adalah metode yang paling dominan, mencerminkan kebutuhan pelanggan akan kemudahan transaksi dan fitur cicilan.
-* **Segmentasi Pelanggan:** Meskipun banyak pelanggan masuk kategori *Lost*, segmen **At Risk** menyumbang pendapatan yang signifikan (26.41%), memberikan peluang besar untuk strategi *win-back*.
-
----
+Keterangan : ganti bagian path dengan path file dasboard.py di komputer kamu

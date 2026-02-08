@@ -396,178 +396,250 @@ st.markdown("**Metode pembayaran apa yang paling sering digunakan pelanggan dan 
 tab3, tab4 = st.tabs(["📊 Visualisasi", "📋 Data"])
 
 with tab3:
-    col1, col2 = st.columns(2)
+    # ===============================
+    # ANALISIS METODE PEMBAYARAN
+    # ===============================
     
-    with col1:
-        st.markdown("##### Frekuensi Penggunaan Metode Pembayaran")
-        
-        payment_freq = df_filtered['payment_type'].value_counts().reset_index()
-        payment_freq.columns = ['payment_type', 'frequency']
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        bars = ax.bar(range(len(payment_freq)), payment_freq['frequency'], 
-                        color='#9b59b6', alpha=0.8)
-        ax.set_xticks(range(len(payment_freq)))
-        ax.set_xticklabels(payment_freq['payment_type'], rotation=45, ha='right')
-        ax.set_xlabel('Metode Pembayaran', fontsize=12, fontweight='bold')
-        ax.set_ylabel('Frekuensi (Jumlah Transaksi)', fontsize=12, fontweight='bold')
-        ax.set_title('Frekuensi Penggunaan Metode Pembayaran', fontsize=14, fontweight='bold', pad=20)
-        ax.grid(True, alpha=0.3, axis='y')
-        
-        # Tambahkan nilai dan persentase
-        total_transactions = payment_freq['frequency'].sum()
-        for i, (bar, row) in enumerate(zip(bars, payment_freq.itertuples())):
-            value = row.frequency
-            pct = (value / total_transactions) * 100
-            ax.text(i, value, f'{value:,}\n({pct:.1f}%)', 
-                    ha='center', va='bottom', fontsize=10, fontweight='bold')
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
+    st.markdown("### Analisis Metode Pembayaran")
     
-    with col2:
-        st.markdown("##### Total Pendapatan per Metode Pembayaran")
-        
-        payment_revenue = df_filtered.groupby('payment_type')['total_payment_value'].sum().reset_index()
-        payment_revenue.columns = ['payment_type', 'total_revenue']
-        payment_revenue = payment_revenue.sort_values('total_revenue', ascending=False)
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        bars = ax.bar(range(len(payment_revenue)), payment_revenue['total_revenue'], 
-                        color='#e67e22', alpha=0.8)
-        ax.set_xticks(range(len(payment_revenue)))
-        ax.set_xticklabels(payment_revenue['payment_type'], rotation=45, ha='right')
-        ax.set_xlabel('Metode Pembayaran', fontsize=12, fontweight='bold')
-        ax.set_ylabel('Total Pendapatan (R$)', fontsize=12, fontweight='bold')
-        ax.set_title('Total Pendapatan per Metode Pembayaran', fontsize=14, fontweight='bold', pad=20)
-        ax.grid(True, alpha=0.3, axis='y')
-        
-        # Tambahkan nilai
-        total_all = payment_revenue['total_revenue'].sum()
-        for i, (bar, row) in enumerate(zip(bars, payment_revenue.itertuples())):
-            value = row.total_revenue
-            pct = (value / total_all) * 100
-            ax.text(i, value, f'R$ {value/1000:.0f}K\n({pct:.1f}%)', 
-                    ha='center', va='bottom', fontsize=10, fontweight='bold')
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
-    
-    # Visualisasi gabungan
-    st.markdown("##### Perbandingan Komprehensif: Frekuensi vs Pendapatan vs Rata-rata Nilai Transaksi")
-    
+    # -------------------------------
+    # PREPARATION DATA
+    # -------------------------------
     payment_analysis = df_filtered.groupby('payment_type').agg({
         'order_id': 'count',
         'total_payment_value': ['sum', 'mean']
     }).reset_index()
-    payment_analysis.columns = ['payment_type', 'frequency', 'total_revenue', 'avg_transaction']
-    payment_analysis = payment_analysis.sort_values('total_revenue', ascending=False)
     
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 5))
+    payment_analysis.columns = [
+        'payment_type',
+        'frekuensi_transaksi',
+        'total_pendapatan',
+        'rata_rata_nilai_transaksi'
+    ]
     
-    # Chart 1: Frequency
-    bars1 = ax1.bar(payment_analysis['payment_type'], payment_analysis['frequency'], 
-                    color='#3498db', alpha=0.8)
-    ax1.set_xlabel('Metode Pembayaran', fontsize=11, fontweight='bold')
-    ax1.set_ylabel('Frekuensi', fontsize=11, fontweight='bold')
-    ax1.set_title('Frekuensi Penggunaan', fontsize=12, fontweight='bold')
-    ax1.tick_params(axis='x', rotation=45)
-    ax1.grid(True, alpha=0.3, axis='y')
-    for bar, value in zip(bars1, payment_analysis['frequency']):
-        ax1.text(bar.get_x() + bar.get_width()/2, value, f'{value:,}', 
-                ha='center', va='bottom', fontsize=9, fontweight='bold')
+    payment_analysis = payment_analysis.sort_values('total_pendapatan', ascending=False)
     
-    # Chart 2: Total Revenue
-    bars2 = ax2.bar(payment_analysis['payment_type'], payment_analysis['total_revenue'], 
-                color='#2ecc71', alpha=0.8)
-    ax2.set_xlabel('Metode Pembayaran', fontsize=11, fontweight='bold')
-    ax2.set_ylabel('Total Pendapatan (R$)', fontsize=11, fontweight='bold')
-    ax2.set_title('Total Pendapatan', fontsize=12, fontweight='bold')
-    ax2.tick_params(axis='x', rotation=45)
-    ax2.grid(True, alpha=0.3, axis='y')
-    for bar, value in zip(bars2, payment_analysis['total_revenue']):
-        ax2.text(bar.get_x() + bar.get_width()/2, value, f'R$ {value/1000:.0f}K', 
-                ha='center', va='bottom', fontsize=9, fontweight='bold')
+    # Identifikasi metode pembayaran dominan
+    metode_dominan = payment_analysis.iloc[0]['payment_type']
     
-    # Chart 3: Avg Transaction Value
-    bars3 = ax3.bar(payment_analysis['payment_type'], payment_analysis['avg_transaction'], 
-                    color='#e74c3c', alpha=0.8)
-    ax3.set_xlabel('Metode Pembayaran', fontsize=11, fontweight='bold')
-    ax3.set_ylabel('Rata-rata Nilai Transaksi (R$)', fontsize=11, fontweight='bold')
-    ax3.set_title('Rata-rata Nilai Transaksi', fontsize=12, fontweight='bold')
-    ax3.tick_params(axis='x', rotation=45)
-    ax3.grid(True, alpha=0.3, axis='y')
-    for bar, value in zip(bars3, payment_analysis['avg_transaction']):
-        ax3.text(bar.get_x() + bar.get_width()/2, value, f'R$ {value:.0f}', 
-                ha='center', va='bottom', fontsize=9, fontweight='bold')
+    # Warna sesuai prinsip visualisasi
+    base_color = '#9ca3af'       # abu-abu netral
+    highlight_color = '#2563eb'  # biru (dominan)
     
-    plt.tight_layout()
+    colors = [
+        highlight_color if m == metode_dominan else base_color
+        for m in payment_analysis['payment_type']
+    ]
+    
+    # ===============================
+    # VISUAL 1 & 2 (DUA KOLOM)
+    # ===============================
+    col1, col2 = st.columns(2)
+    
+    # ---- Frekuensi Penggunaan ----
+    with col1:
+        st.markdown("##### Frekuensi Penggunaan Metode Pembayaran")
+    
+        fig, ax = plt.subplots(figsize=(11, 6))
+        bars = ax.bar(
+            payment_analysis['payment_type'],
+            payment_analysis['frekuensi_transaksi'],
+            color=colors,
+            alpha=0.9
+        )
+    
+        ax.set_xlabel('Metode Pembayaran', fontweight='bold')
+        ax.set_ylabel('Frekuensi (Jumlah Transaksi)', fontweight='bold')
+        ax.set_title('Frekuensi Penggunaan Metode Pembayaran', fontweight='bold', pad=20)
+        ax.tick_params(axis='x', rotation=45)
+        ax.grid(True, axis='y', alpha=0.3)
+    
+        total_transaksi = payment_analysis['frekuensi_transaksi'].sum()
+        for bar, value in zip(bars, payment_analysis['frekuensi_transaksi']):
+            pct = value / total_transaksi * 100
+            ax.text(
+                bar.get_x() + bar.get_width()/2,
+                value,
+                f'{value:,}\n({pct:.1f}%)',
+                ha='center',
+                va='bottom',
+                fontweight='bold'
+            )
+    
+        st.pyplot(fig)
+        plt.close()
+    
+    # ---- Total Pendapatan ----
+    with col2:
+        st.markdown("##### Total Pendapatan per Metode Pembayaran")
+    
+        fig, ax = plt.subplots(figsize=(11, 6))
+        bars = ax.bar(
+            payment_analysis['payment_type'],
+            payment_analysis['total_pendapatan'],
+            color=colors,
+            alpha=0.9
+        )
+    
+        ax.set_xlabel('Metode Pembayaran', fontweight='bold')
+        ax.set_ylabel('Total Pendapatan (R$)', fontweight='bold')
+        ax.set_title('Total Pendapatan per Metode Pembayaran', fontweight='bold', pad=20)
+        ax.tick_params(axis='x', rotation=45)
+        ax.grid(True, axis='y', alpha=0.3)
+    
+        total_pendapatan_all = payment_analysis['total_pendapatan'].sum()
+        for bar, value in zip(bars, payment_analysis['total_pendapatan']):
+            pct = value / total_pendapatan_all * 100
+            ax.text(
+                bar.get_x() + bar.get_width()/2,
+                value,
+                f'R$ {value/1000:.0f}K\n({pct:.1f}%)',
+                ha='center',
+                va='bottom',
+                fontweight='bold'
+            )
+    
+        st.pyplot(fig)
+        plt.close()
+    
+    # ===============================
+    # VISUAL 3 (KOMPREHENSIF)
+    # ===============================
+    st.markdown("##### Perbandingan Komprehensif: Frekuensi, Pendapatan, dan Rata-rata Nilai Transaksi")
+    
+    fig, axes = plt.subplots(1, 3, figsize=(20, 6))
+    
+    metrics = [
+        ('frekuensi_transaksi', 'Frekuensi', 'Frekuensi Penggunaan'),
+        ('total_pendapatan', 'Total Pendapatan (R$)', 'Total Pendapatan'),
+        ('rata_rata_nilai_transaksi', 'Rata-rata Nilai Transaksi (R$)', 'Rata-rata Nilai Transaksi')
+    ]
+    
+    for ax, (col, ylabel, title) in zip(axes, metrics):
+        bars = ax.bar(
+            payment_analysis['payment_type'],
+            payment_analysis[col],
+            color=colors,
+            alpha=0.9
+        )
+        ax.set_title(title, fontweight='bold')
+        ax.set_ylabel(ylabel, fontweight='bold')
+        ax.tick_params(axis='x', rotation=45)
+        ax.grid(True, axis='y', alpha=0.3)
+    
+        for bar, value in zip(bars, payment_analysis[col]):
+            label = (
+                f'R$ {value:.0f}'
+                if col == 'rata_rata_nilai_transaksi'
+                else f'{value:,}'
+            )
+            ax.text(
+                bar.get_x() + bar.get_width()/2,
+                value,
+                label,
+                ha='center',
+                va='bottom',
+                fontsize=9,
+                fontweight='bold'
+            )
+    
     st.pyplot(fig)
     plt.close()
 
 with tab4:
     st.markdown("##### Statistik Detail Metode Pembayaran")
-    
+
     payment_stats = df_filtered.groupby('payment_type').agg({
         'order_id': 'count',
         'total_payment_value': ['sum', 'mean', 'median', 'std'],
         'max_installments': 'mean'
     }).round(2)
-    payment_stats.columns = ['Total Transactions', 'Total Revenue (R$)', 'Avg Transaction (R$)', 
-                            'Median Transaction (R$)', 'Std Transaction (R$)', 'Avg Installments']
-    
-    # Tambahkan persentase
-    payment_stats['Transaction Share (%)'] = (payment_stats['Total Transactions'] / 
-                                              payment_stats['Total Transactions'].sum() * 100).round(2)
-    payment_stats['Revenue Share (%)'] = (payment_stats['Total Revenue (R$)'] / 
-                                          payment_stats['Total Revenue (R$)'].sum() * 100).round(2)
-    
-    payment_stats = payment_stats.sort_values('Total Revenue (R$)', ascending=False)
-    st.dataframe(payment_stats, use_container_width=True)
-    
-    # Summary
-    col_p1, col_p2, col_p3 = st.columns(3)
-    with col_p1:
-        most_used = payment_freq.iloc[0]['payment_type']
-        st.metric("Metode Paling Sering", most_used)
-    with col_p2:
-        highest_revenue = payment_revenue.iloc[0]['payment_type']
-        st.metric("Pendapatan Tertinggi", highest_revenue)
-    with col_p3:
-        highest_avg = payment_analysis.sort_values('avg_transaction', ascending=False).iloc[0]['payment_type']
-        st.metric("Rata-rata Nilai Transaksi Tertinggi", highest_avg)
 
+    payment_stats.columns = [
+        'Total Transaksi',
+        'Total Pendapatan (R$)',
+        'Rata-rata Nilai Transaksi (R$)',
+        'Median Nilai Transaksi (R$)',
+        'Std Nilai Transaksi (R$)',
+        'Rata-rata Cicilan'
+    ]
+
+    # Tambahkan persentase
+    payment_stats['Persentase Transaksi (%)'] = (
+        payment_stats['Total Transaksi'] /
+        payment_stats['Total Transaksi'].sum() * 100
+    ).round(2)
+
+    payment_stats['Persentase Pendapatan (%)'] = (
+        payment_stats['Total Pendapatan (R$)'] /
+        payment_stats['Total Pendapatan (R$)'].sum() * 100
+    ).round(2)
+
+    payment_stats = payment_stats.sort_values('Total Pendapatan (R$)', ascending=False)
+
+    st.dataframe(payment_stats, use_container_width=True)
+
+    # =====================
+    # SUMMARY METRICS
+    # =====================
+    col_p1, col_p2, col_p3 = st.columns(3)
+
+    with col_p1:
+        metode_paling_sering = payment_analysis.iloc[0]['payment_type']
+        st.metric("Metode Paling Sering Digunakan", metode_paling_sering)
+
+    with col_p2:
+        metode_pendapatan_tertinggi = payment_analysis.iloc[0]['payment_type']
+        st.metric("Pendapatan Tertinggi", metode_pendapatan_tertinggi)
+
+    with col_p3:
+        metode_avg_tertinggi = (
+            payment_analysis
+            .sort_values('rata_rata_nilai_transaksi', ascending=False)
+            .iloc[0]['payment_type']
+        )
+        st.metric("Rata-rata Nilai Transaksi Tertinggi", metode_avg_tertinggi)
 with st.expander("💡 Insight & Kesimpulan"):
-    most_freq_method = payment_freq.iloc[0]['payment_type']
-    most_freq_count = payment_freq.iloc[0]['frequency']
-    most_freq_pct = (most_freq_count / payment_freq['frequency'].sum()) * 100
-    
-    highest_rev_method = payment_revenue.iloc[0]['payment_type']
-    highest_rev_value = payment_revenue.iloc[0]['total_revenue']
-    highest_rev_pct = (highest_rev_value / payment_revenue['total_revenue'].sum()) * 100
-    
-    highest_avg_method = payment_analysis.sort_values('avg_transaction', ascending=False).iloc[0]['payment_type']
-    highest_avg_value = payment_analysis.sort_values('avg_transaction', ascending=False).iloc[0]['avg_transaction']
-    
+
+    most_freq_row = payment_analysis.iloc[0]
+    most_freq_method = most_freq_row['payment_type']
+    most_freq_count = most_freq_row['frekuensi_transaksi']
+    most_freq_pct = (
+        most_freq_count /
+        payment_analysis['frekuensi_transaksi'].sum() * 100
+    )
+
+    highest_pendapatan_value = most_freq_row['total_pendapatan']
+    highest_pendapatan_pct = (
+        highest_pendapatan_value /
+        payment_analysis['total_pendapatan'].sum() * 100
+    )
+
+    highest_avg_row = (
+        payment_analysis
+        .sort_values('rata_rata_nilai_transaksi', ascending=False)
+        .iloc[0]
+    )
+
     st.write(f"""
     **Temuan Utama:**
-    - Metode pembayaran **{most_freq_method}** adalah yang paling sering digunakan dengan **{most_freq_count:,} transaksi** ({most_freq_pct:.1f}%)
-    - Metode **{highest_rev_method}** menghasilkan revenue tertinggi sebesar **R$ {highest_rev_value:,.2f}** ({highest_rev_pct:.1f}% dari total revenue)
-    - Metode **{highest_avg_method}** memiliki nilai transaksi rata-rata tertinggi sebesar **R$ {highest_avg_value:,.2f}**
-    
+    - Metode pembayaran **{most_freq_method}** merupakan metode yang paling sering digunakan dengan
+      **{most_freq_count:,} transaksi** ({most_freq_pct:.1f}% dari total transaksi).
+    - Metode **{most_freq_method}** juga memberikan kontribusi **pendapatan tertinggi**
+      sebesar **R$ {highest_pendapatan_value:,.2f}** ({highest_pendapatan_pct:.1f}% dari total pendapatan).
+    - Metode **{highest_avg_row['payment_type']}** memiliki **rata-rata nilai transaksi tertinggi**
+      sebesar **R$ {highest_avg_row['rata_rata_nilai_transaksi']:,.2f}**.
+
     **Kesimpulan:**
-    Metode pembayaran {most_freq_method} mendominasi baik dari segi frekuensi penggunaan maupun kontribusi revenue. 
-    Perusahaan sebaiknya memastikan infrastruktur payment gateway untuk metode ini selalu optimal dan mempertimbangkan 
-    program insentif untuk metode pembayaran lain guna mendiversifikasi opsi pembayaran pelanggan.
+    Metode pembayaran **{most_freq_method}** mendominasi baik dari sisi frekuensi penggunaan
+    maupun kontribusi pendapatan. Oleh karena itu, perusahaan perlu memastikan stabilitas
+    dan optimalisasi infrastruktur untuk metode ini, sekaligus mendorong adopsi metode
+    pembayaran lain guna mengurangi ketergantungan dan meningkatkan diversifikasi transaksi.
     """)
 
 st.markdown("---")
 
-# ===========================
-# PERTANYAAN BISNIS 3: RFM ANALYSIS
-# ===========================
+# Pertanyaan Bisnis 3
 st.subheader("❓ Pertanyaan Bisnis 3: Segmentasi Pelanggan Berdasarkan RFM Analysis")
 st.markdown("**Bagaimana segmentasi pelanggan E-Commerce berdasarkan Recency, Frequency, dan Monetary (RFM) selama periode 2016–2018, serta segmen pelanggan mana yang memberikan kontribusi pendapatan terbesar?**")
 
@@ -619,58 +691,61 @@ def calculate_rfm(df_input):
     
     return rfm
 
+# Penggunaan fungsi
 rfm_data = calculate_rfm(df_filtered)
-
 tab5, tab6, tab7 = st.tabs(["📊 Visualisasi Segmentasi", "📈 Analisis RFM", "📋 Data"])
 
+# MAsuk tab5
 with tab5:
     st.markdown("##### Distribusi Customer Segmentation")
+    # Hitung distribusi segmen
+    segment_dist = rfm_data['segment'].value_counts()
+    # Identifikasi segmen dengan nilai tertinggi
+    max_value = segment_dist.max()
     
-    col1, col2 = st.columns(2)
+    # Warna: netral + highlight
+    base_color = '#9ca3af'      # abu-abu netral (semua bar)
+    highlight_color = '#2563eb' # biru (nilai tertinggi)
     
-    with col1:
-        # Pie chart distribusi segmen
-        segment_dist = rfm_data['segment'].value_counts()
-        
-        fig, ax = plt.subplots(figsize=(10, 8))
-        colors_seg = ['#2ecc71', '#3498db', '#f39c12', '#9b59b6', '#e74c3c', '#1abc9c', '#e67e22', '#95a5a6']
-        wedges, texts, autotexts = ax.pie(
-            segment_dist.values,
-            labels=segment_dist.index,
-            autopct='%1.1f%%',
-            colors=colors_seg,
-            startangle=90,
-            textprops={'fontsize': 10}
+    colors = [
+        highlight_color if value == max_value else base_color
+        for value in segment_dist.values
+    ]
+    # Bar chart
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    bars = ax.barh(
+        range(len(segment_dist)),
+        segment_dist.values,
+        color=colors,
+        alpha=0.9
+    )
+    
+    ax.set_yticks(range(len(segment_dist)))
+    ax.set_yticklabels(segment_dist.index)
+    ax.set_xlabel('Jumlah Customer', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Customer Segment', fontsize=12, fontweight='bold')
+    ax.set_title('Jumlah Customer per Segmen', fontsize=14, fontweight='bold', pad=20)
+    
+    ax.grid(True, axis='x', alpha=0.3)
+    
+    # Label jumlah & persentase
+    total = segment_dist.sum()
+    for i, value in enumerate(segment_dist.values):
+        pct = (value / total) * 100
+        ax.text(
+            value,
+            i,
+            f' {value:,} ({pct:.1f}%)',
+            va='center',
+            fontsize=10,
+            fontweight='bold'
         )
-        ax.set_title('Customer Segmentation Distribution', fontsize=14, fontweight='bold', pad=20)
-        
-        for autotext in autotexts:
-            autotext.set_color('white')
-            autotext.set_fontweight('bold')
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
     
-    with col2:
-        # Bar chart jumlah customer per segmen
-        fig, ax = plt.subplots(figsize=(10, 8))
-        bars = ax.barh(range(len(segment_dist)), segment_dist.values, color=colors_seg, alpha=0.8)
-        ax.set_yticks(range(len(segment_dist)))
-        ax.set_yticklabels(segment_dist.index)
-        ax.set_xlabel('Jumlah Customer', fontsize=12, fontweight='bold')
-        ax.set_ylabel('Customer Segment', fontsize=12, fontweight='bold')
-        ax.set_title('Jumlah Customer per Segmen', fontsize=14, fontweight='bold', pad=20)
-        ax.grid(True, alpha=0.3, axis='x')
-        
-        for i, (bar, value) in enumerate(zip(bars, segment_dist.values)):
-            pct = (value / segment_dist.sum()) * 100
-            ax.text(value, i, f' {value:,} ({pct:.1f}%)', va='center', fontsize=10, fontweight='bold')
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
-    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+
     # Revenue contribution per segment
     st.markdown("##### Kontribusi Pendapatan per Segmen Customer")
     
@@ -679,50 +754,98 @@ with tab5:
         'customer_id': 'count',
         'frequency': 'sum'
     }).reset_index()
+    
     segment_revenue.columns = ['segment', 'total_revenue', 'customer_count', 'total_orders']
     segment_revenue = segment_revenue.sort_values('total_revenue', ascending=False)
     
+    # Warna sesuai prinsip visualisasi
+    base_color = '#9ca3af'       # abu-abu netral
+    highlight_color = '#2563eb'  # biru untuk nilai tertinggi
+    
+    # Identifikasi nilai tertinggi
+    max_total_revenue = segment_revenue['total_revenue'].max()
+    
+    colors_revenue = [
+        highlight_color if value == max_total_revenue else base_color
+        for value in segment_revenue['total_revenue']
+    ]
+    
     col_rev1, col_rev2 = st.columns(2)
     
+    # TOTAL REVENUE PER SEGMENT
     with col_rev1:
-        fig, ax = plt.subplots(figsize=(12, 6))
-        bars = ax.bar(range(len(segment_revenue)), segment_revenue['total_revenue'], 
-                        color=colors_seg, alpha=0.8)
+        fig, ax = plt.subplots(figsize=(14, 7))
+    
+        bars = ax.bar(
+            range(len(segment_revenue)),
+            segment_revenue['total_revenue'],
+            color=colors_revenue,
+            alpha=0.9
+        )
+    
         ax.set_xticks(range(len(segment_revenue)))
         ax.set_xticklabels(segment_revenue['segment'], rotation=45, ha='right')
         ax.set_xlabel('Customer Segment', fontsize=12, fontweight='bold')
         ax.set_ylabel('Total Pendapatan (R$)', fontsize=12, fontweight='bold')
-        ax.set_title('Total Pendapatan per Segmen Customer', fontsize=14, fontweight='bold', pad=20)
+        ax.set_title('Total Pendapatan per Segmen Customer', fontsize=15, fontweight='bold', pad=20)
         ax.grid(True, alpha=0.3, axis='y')
-        
+    
         total_rfm_revenue = segment_revenue['total_revenue'].sum()
-        for i, (bar, row) in enumerate(zip(bars, segment_revenue.itertuples())):
-            value = row.total_revenue
+    
+        for i, value in enumerate(segment_revenue['total_revenue']):
             pct = (value / total_rfm_revenue) * 100
-            ax.text(i, value, f'R$ {value/1000:.0f}K\n({pct:.1f}%)', 
-                    ha='center', va='bottom', fontsize=9, fontweight='bold')
-        
+            ax.text(
+                i,
+                value,
+                f'R$ {value/1000:.0f}K\n({pct:.1f}%)',
+                ha='center',
+                va='bottom',
+                fontsize=10,
+                fontweight='bold'
+            )
+    
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
-    
+
+    # AVERAGE REVENUE PER CUSTOMER PER SEGMENT
     with col_rev2:
-        # Average revenue per customer per segment
-        segment_revenue['avg_revenue_per_customer'] = segment_revenue['total_revenue'] / segment_revenue['customer_count']
-        
-        fig, ax = plt.subplots(figsize=(12, 6))
-        bars = ax.bar(range(len(segment_revenue)), segment_revenue['avg_revenue_per_customer'], 
-                        color=colors_seg, alpha=0.8)
+        segment_revenue['avg_revenue_per_customer'] = (
+            segment_revenue['total_revenue'] / segment_revenue['customer_count']
+        )
+    
+        max_avg_revenue = segment_revenue['avg_revenue_per_customer'].max()
+    
+        colors_avg = [
+            highlight_color if value == max_avg_revenue else base_color
+            for value in segment_revenue['avg_revenue_per_customer']
+        ]
+        fig, ax = plt.subplots(figsize=(14, 7))
+        bars = ax.bar(
+            range(len(segment_revenue)),
+            segment_revenue['avg_revenue_per_customer'],
+            color=colors_avg,
+            alpha=0.9
+        )
+    
         ax.set_xticks(range(len(segment_revenue)))
         ax.set_xticklabels(segment_revenue['segment'], rotation=45, ha='right')
         ax.set_xlabel('Customer Segment', fontsize=12, fontweight='bold')
         ax.set_ylabel('Rata-rata Pendapatan per Customer (R$)', fontsize=12, fontweight='bold')
-        ax.set_title('Rata-rata Pendapatan per Customer berdasarkan Segmen', fontsize=14, fontweight='bold', pad=20)
+        ax.set_title('Rata-rata Pendapatan per Customer berdasarkan Segmen', fontsize=15, fontweight='bold', pad=20)
         ax.grid(True, alpha=0.3, axis='y')
-        
-        for i, (bar, value) in enumerate(zip(bars, segment_revenue['avg_revenue_per_customer'])):
-            ax.text(i, value, f'R$ {value:.0f}', ha='center', va='bottom', fontsize=9, fontweight='bold')
-        
+    
+        for i, value in enumerate(segment_revenue['avg_revenue_per_customer']):
+            ax.text(
+                i,
+                value,
+                f'R$ {value:.0f}',
+                ha='center',
+                va='bottom',
+                fontsize=10,
+                fontweight='bold'
+            )
+    
         plt.tight_layout()
         st.pyplot(fig)
         plt.close()
